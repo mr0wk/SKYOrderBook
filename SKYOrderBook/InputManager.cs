@@ -2,7 +2,7 @@
 {
     public static class InputManager
     {
-        public static string PromptForFilePath()
+        public static string PromptForInputFilePath()
         {
             Console.WriteLine("Enter the path to the CSV file:");
 
@@ -12,12 +12,19 @@
             {
                 Console.WriteLine("File does not exist. Path is invalid.");
 
-                return PromptForFilePath();
+                return PromptForInputFilePath();
             }
 
             Console.WriteLine("File exists. Path is valid.");
 
             return filePath;
+        }
+
+        public static string PromptForOutputFilePapth()
+        {
+            Console.WriteLine("Enter the path to the output CSV file:");
+
+            return Console.ReadLine();
         }
     }
 }

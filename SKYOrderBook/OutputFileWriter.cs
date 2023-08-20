@@ -6,7 +6,7 @@ namespace SKYOrderBook
 {
     public static class OutputFileWriter
     {
-        public static void CreateFileFromTicket(IEnumerable<CsvRecord> ticket)
+        public static void CreateFileFromTicket(IEnumerable<CsvRecord> ticket, string outputFilePath)
         {
             var config = new CsvConfiguration(CultureInfo.InvariantCulture)
             {
@@ -14,10 +14,20 @@ namespace SKYOrderBook
                 MissingFieldFound = null
             };
 
-            using (var writer = new StreamWriter(@"D:\Dev\SKYOrderBook\SKYOrderBook\Output.csv"))
+            using (var writer = new StreamWriter(outputFilePath))
             using (var csvWriter = new CsvWriter(writer, config))
             {
-                csvWriter.WriteRecord("SourceTime;Side;Action;OrderId;Price;Qty;B0;BQ0;BN0;A0;AQ0;AN0");
+                var headerFieldNames = new[]
+                {
+                    "SourceTime", "Side", "Action", "OrderId", "Price", "Qty",
+                    "B0", "BQ0", "BN0", "A0", "AQ0", "AN0"
+                };
+
+                foreach (var headerFieldName in headerFieldNames)
+                {
+                    csvWriter.WriteField(headerFieldName);
+                }
+
                 csvWriter.NextRecord();
 
                 foreach (var record in ticket)

@@ -1,5 +1,4 @@
 ﻿using CsvHelper.Configuration.Attributes;
-using SKYOrderBook.Enum;
 using Action = SKYOrderBook.Enum.Action;
 
 namespace SKYOrderBook
@@ -41,5 +40,11 @@ namespace SKYOrderBook
 
         [Name("AN0")]
         public ushort? AN0 { get; set; }
+
+        [Ignore]
+        public bool IsDeleted { get; set; } = false;
+
+        [Ignore]
+        public bool IsOutdated { get; set; } = false;
     }
 }
