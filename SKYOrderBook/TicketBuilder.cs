@@ -19,7 +19,6 @@ namespace SKYOrderBook
             Stopwatch stopwatch = new Stopwatch();
             foreach (var orderRequest in orderRequests)
             {
-                stopwatch.Start();
                 if (orderRequest.Action == Action.Y || orderRequest.Action == Action.F)
                 {
                     ClearTicket();
@@ -50,9 +49,6 @@ namespace SKYOrderBook
                         AddOrderRequest(orderRequest);
                     }
                 }
-
-                var elapsed = stopwatch.Elapsed;
-                Console.WriteLine($"Iteration executed in {elapsed.TotalSeconds:F2}.");
             }
 
             return _ticket;
@@ -103,11 +99,6 @@ namespace SKYOrderBook
 
         private static void UpdateTicket()
         {
-            foreach (var order in _ticket)
-            {
-
-            }
-
             var bidOrdersValidForCalculations = _ticket.Where(o => o.Side.Equals("1") && o.Action != Action.Y && o.Action != Action.F && o.Action != Action.D && !o.IsDeleted && !o.IsOutdated);
 
             if (bidOrdersValidForCalculations.Any())
