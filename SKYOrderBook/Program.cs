@@ -10,7 +10,8 @@ try
     
     stopwatch.Start();
 
-    var ticket = TicketBuilder.Build(records);
+    var ticketBuilder = new TicketBuilder();
+    var ticket = ticketBuilder.Build(records);
 
     stopwatch.Stop();
 

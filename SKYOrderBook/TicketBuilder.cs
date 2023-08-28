@@ -1,149 +1,85 @@
-﻿using System.Diagnostics;
-using System.Reflection;
-using Action = SKYOrderBook.Enum.Action;
+﻿using Action = SKYOrderBook.Enum.Action;
 
 namespace SKYOrderBook
 {
-    public static class TicketBuilder
+    public class TicketBuilder
     {
-        private static List<CsvRecord> _ticket = new List<CsvRecord>();
-        private static ushort? _b0 = null;
-        private static ushort? _bq0 = null;
-        private static ushort? _bn0 = null;
-        private static ushort? _a0 = null;
-        private static ushort? _aq0 = null;
-        private static ushort? _an0 = null;
+        private Dictionary<ulong, CsvRecord> _processedTicksBid = new Dictionary<ulong, CsvRecord>();
+        private Dictionary<ulong, CsvRecord> _processedTicksAsk = new Dictionary<ulong, CsvRecord>();
+        private List<CsvRecord> _ticket = new List<CsvRecord>();
+        private ushort? _b0 = null;
+        private ushort? _bq0 = null;
+        private ushort? _bn0 = null;
+        private ushort? _a0 = null;
+        private ushort? _aq0 = null;
+        private ushort? _an0 = null;
 
-        public static IEnumerable<CsvRecord> Build(IEnumerable<CsvRecord> orderRequests)
-        {
-            Stopwatch stopwatch = new Stopwatch();
-            foreach (var orderRequest in orderRequests)
+        public List<CsvRecord> Build(IEnumerable<CsvRecord> ticks)
+        {   
+            foreach (var tick in ticks.ToList())
             {
-                if (orderRequest.Action == Action.Y || orderRequest.Action == Action.F)
+                if (tick.Action == Action.Y || tick.Action == Action.F)
                 {
-                    ClearTicket();
-                    _ticket.Add(orderRequest);
+                    ResetTicketComponents();
+                    _ticket.Add(tick);
+                    continue;
                 }
-                else if (orderRequest.Action == Action.A || orderRequest.Action == Action.M)
+
+                var processedTicksToOperateOn = tick.Side == 1 ? _processedTicksBid : _processedTicksAsk;
+
+                if (!processedTicksToOperateOn.ContainsKey(tick.OrderId))
                 {
-                    var orderExists = CheckOrderExists(orderRequest.OrderId);
-
-                    if (orderExists)
+                    if (tick.Action == Action.A)
                     {
-                        UpdateOrder(orderRequest);
-                    }
-
-                    AddOrderRequest(orderRequest);
-                }
-                else if (orderRequest.Action == Action.D)
-                {
-                    var orderExists = CheckOrderExists(orderRequest.OrderId);
-
-                    if (orderExists)
-                    {
-                        DeleteOrder(orderRequest.OrderId);
-                        AddOrderRequest(orderRequest);
-                    }
-                    else
-                    {
-                        AddOrderRequest(orderRequest);
+                        processedTicksToOperateOn.Add(tick.OrderId, tick);
                     }
                 }
+                else
+                {
+                    if (tick.Action == Action.M)
+                    {
+                        processedTicksToOperateOn.Remove(tick.OrderId);
+                        processedTicksToOperateOn.Add(tick.OrderId, tick);
+                    }
+                    else if (tick.Action == Action.D)
+                    {
+                        processedTicksToOperateOn.Remove(tick.OrderId);
+                    }
+                }
+
+                UpdateTicketComponents((byte)tick.Side);
+
+                tick.A0 = _a0;
+                tick.AQ0 = _aq0;
+                tick.AN0 = _an0;
+                tick.B0 = _b0;
+                tick.BQ0 = _bq0;
+                tick.BN0 = _bn0;
+
+                _ticket.Add(tick);
             }
 
             return _ticket;
         }
 
-        private static void ClearTicket()
+        private void ResetTicketComponents()
         {
             _b0 = _bq0 = _bn0 = _a0 = _aq0 = _an0 = null;
         }
 
-        private static bool CheckOrderExists(ulong orderId)
+        private void UpdateTicketComponents(byte side)
         {
-            return _ticket.Where(o => o.OrderId.Equals(orderId)).Any();
-        }
-
-        private static void UpdateOrder(CsvRecord upToDateOrderRequest)
-        {
-            var outdatedOrderRequests = _ticket.Where(o => o.OrderId.Equals(upToDateOrderRequest.OrderId) && o.SourceTime != upToDateOrderRequest.SourceTime).ToList();
-
-            var modifiedProperties = new Dictionary<string, object>
+            if (side == 1)
             {
-                { "IsOutdated", true },
-            };
-
-            foreach (var outdatedOrderRequest in outdatedOrderRequests)
-            {
-                ModifyOrderRequestProperties(outdatedOrderRequest, modifiedProperties);
+                _b0 = _processedTicksBid.Values.MaxBy(t => t.Price).Price;
+                _bq0 = (ushort)_processedTicksBid.Values.Where(t => t.Price.Equals(_b0)).Sum(t => t.Quantity);
+                _bn0 = (ushort)_processedTicksBid.Values.Count(t => t.Price == _b0);
             }
-        }
-
-        private static void AddOrderRequest(CsvRecord request)
-        {
-            _ticket.Add(request);
-            UpdateTicket();
-
-            var modifiedProperties = new Dictionary<string, object>
+            else if (side == 2)
             {
-                { "B0", _b0 },
-                { "BQ0", _bq0 },
-                { "BN0", _bn0 },
-                { "A0", _a0 },
-                { "AQ0", _aq0 },
-                { "AN0", _an0 }
-            };
-
-            ModifyOrderRequestProperties(request, modifiedProperties);
-        }
-
-        private static void UpdateTicket()
-        {
-            var bidOrdersValidForCalculations = _ticket.Where(o => o.Side.Equals("1") && o.Action != Action.Y && o.Action != Action.F && o.Action != Action.D && !o.IsDeleted && !o.IsOutdated);
-
-            if (bidOrdersValidForCalculations.Any())
-            {
-                _b0 = bidOrdersValidForCalculations.Max(o => o.Price);
-                _bq0 = (ushort)bidOrdersValidForCalculations.Where(o => o.Price.Equals(_b0)).Sum(o => o.Quantity);
-                _bn0 = (ushort)bidOrdersValidForCalculations.Count(o => o.Price.Equals(_b0));
-            }
-
-            var askOrdersValidForCalculations = _ticket.Where(o => o.Side.Equals("2") && o.Action != Action.Y && o.Action != Action.F && o.Action != Action.D && !o.IsDeleted && !o.IsOutdated);
-
-            if (askOrdersValidForCalculations.Any())
-            {
-                _a0 = askOrdersValidForCalculations.Min(o => o.Price);
-                _aq0 = (ushort)askOrdersValidForCalculations.Where(o => o.Price.Equals(_a0)).Sum(o => o.Quantity);
-                _an0 = (ushort)askOrdersValidForCalculations.Count(o => o.Price.Equals(_a0));
-            }
-        }
-
-        private static void DeleteOrder(ulong orderId)
-        {
-            var orderRequestsToDelete = _ticket.Where(o => o.OrderId.Equals(orderId)).ToList();
-
-            var modifiedProperties = new Dictionary<string, object>
-            {
-                { "IsDeleted", true }
-            };
-
-            foreach (var orderRequest in orderRequestsToDelete)
-            {
-                ModifyOrderRequestProperties(orderRequest, modifiedProperties);
-            }
-        }
-
-        private static void ModifyOrderRequestProperties(CsvRecord orderRequest, Dictionary<string, object> modifiedProperties)
-        {
-
-            foreach (var kvp in modifiedProperties)
-            {
-                PropertyInfo property = orderRequest.GetType().GetProperty(kvp.Key);
-
-                if (property != null)
-                {
-                    property.SetValue(orderRequest, kvp.Value);
-                }
+                _a0 = _processedTicksAsk.Values.MinBy(t => t.Price).Price;
+                _aq0 = (ushort)_processedTicksAsk.Values.Where(t => t.Price.Equals(_a0)).Sum(t => t.Quantity);
+                _an0 = (ushort)_processedTicksAsk.Values.Count(t => t.Price == _a0);
             }
         }
     }

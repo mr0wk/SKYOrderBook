@@ -1,4 +1,5 @@
 ﻿using CsvHelper.Configuration.Attributes;
+using SKYOrderBook.Enum;
 using Action = SKYOrderBook.Enum.Action;
 
 namespace SKYOrderBook
@@ -6,10 +7,10 @@ namespace SKYOrderBook
     public class CsvRecord
     {
         [Name("SourceTime")]
-        public string SourceTime { get; set; }
+        public ulong SourceTime { get; set; }
 
         [Name("Side")]
-        public string Side { get; set; }
+        public byte? Side { get; set; }
 
         [Name("Action")]
         public Action Action { get; set; }
@@ -21,7 +22,7 @@ namespace SKYOrderBook
         public ushort Price { get; set; }
 
         [Name("Qty")]
-        public byte Quantity { get; set; }
+        public ushort Quantity { get; set; }
 
         [Name("B0")]
         public ushort? B0 { get; set; }
@@ -40,11 +41,5 @@ namespace SKYOrderBook
 
         [Name("AN0")]
         public ushort? AN0 { get; set; }
-
-        [Ignore]
-        public bool IsDeleted { get; set; } = false;
-
-        [Ignore]
-        public bool IsOutdated { get; set; } = false;
     }
 }
