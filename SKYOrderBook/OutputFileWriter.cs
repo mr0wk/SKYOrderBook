@@ -30,7 +30,7 @@ namespace SKYOrderBook
 
                 csvWriter.NextRecord();
 
-                foreach (var record in ticket)
+                foreach (var record in ticket.ToList())
                 {
                     csvWriter.WriteRecord(record);
                     csvWriter.NextRecord();
