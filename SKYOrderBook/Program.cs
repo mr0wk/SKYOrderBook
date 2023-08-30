@@ -3,8 +3,10 @@ using System.Diagnostics;
 
 try
 {
-    var filePath = InputManager.PromptForInputFilePath();
-    var outputFilePath = InputManager.PromptForOutputFilePapth();
+    /*    var filePath = InputManager.PromptForInputFilePath();
+        var outputFilePath = InputManager.PromptForOutputFilePapth();*/
+    var filePath = @"C:\Users\mrowk\Desktop\recruitment\ticks.csv";
+    var outputFilePath = @"C:\Users\mrowk\Desktop\recruitment\ticks_result.csv";
     var records = InputFileReader.GetAllCsvRecords(filePath);
     Stopwatch stopwatch = new Stopwatch();
     

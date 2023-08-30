@@ -1,4 +1,4 @@
-﻿using Action = SKYOrderBook.Enum.Action;
+﻿using RecordAction = SKYOrderBook.Enums.RecordAction;
 
 namespace SKYOrderBook
 {
@@ -9,18 +9,13 @@ namespace SKYOrderBook
         private Dictionary<ushort, List<CsvRecord>> _processedBidTicksSortedByPrice = new Dictionary<ushort, List<CsvRecord>>();
         private Dictionary<ushort, List<CsvRecord>> _processedAskTicksSortedByPrice = new Dictionary<ushort, List<CsvRecord>>();
         private List<CsvRecord> _ticket = new List<CsvRecord>();
-        private ushort? _b0 = null;
-        private ushort? _bq0 = null;
-        private ushort? _bn0 = null;
-        private ushort? _a0 = null;
-        private ushort? _aq0 = null;
-        private ushort? _an0 = null;
+        private ushort? _b0, _bq0, _bn0, _a0, _aq0, _an0;
 
         public List<CsvRecord> Build(IEnumerable<CsvRecord> ticks)
         {   
             foreach (var tick in ticks.ToList())
             {
-                if (tick.Action == Action.Y || tick.Action == Action.F)
+                if (ShouldResetTicket(tick))
                 {
                     ResetTicketComponents();
                     _ticket.Add(tick);
@@ -32,7 +27,7 @@ namespace SKYOrderBook
 
                 if (!processedTicksToOperateOn.ContainsKey(tick.OrderId))
                 {
-                    if (tick.Action == Action.A)
+                    if (tick.Action == RecordAction.A)
                     {
                         processedTicksToOperateOn.Add(tick.OrderId, tick);
 
@@ -48,7 +43,7 @@ namespace SKYOrderBook
                 }
                 else
                 {
-                    if (tick.Action == Action.M)
+                    if (tick.Action == RecordAction.M)
                     {
                         processedTicksToOperateOn.Remove(tick.OrderId);
                         processedSortedTicksToOperateOn[tick.Price].RemoveAll(existingTick => existingTick.OrderId == tick.OrderId);
@@ -56,7 +51,7 @@ namespace SKYOrderBook
                         processedTicksToOperateOn.Add(tick.OrderId, tick);
                         processedSortedTicksToOperateOn[tick.Price].Add(tick);
                     }
-                    else if (tick.Action == Action.D)
+                    else if (tick.Action == RecordAction.D)
                     {
                         processedTicksToOperateOn.Remove(tick.OrderId);
                         processedSortedTicksToOperateOn[tick.Price].RemoveAll(existingTick => existingTick.OrderId == tick.OrderId);
@@ -78,10 +73,16 @@ namespace SKYOrderBook
             return _ticket;
         }
 
+        private bool ShouldResetTicket(CsvRecord tick)
+        {
+            return tick.Action == RecordAction.Y || tick.Action == RecordAction.F;
+        }
+
         private void ResetTicketComponents()
         {
             _b0 = _bq0 = _bn0 = _a0 = _aq0 = _an0 = null;
         }
+
 
         private void UpdateTicketComponents(byte side)
         {

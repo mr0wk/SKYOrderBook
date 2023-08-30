@@ -16,7 +16,7 @@ namespace SKYOrderBook
 
             var reader = new StreamReader(filePath);
             var csv = new CsvReader(reader, config);
-            
+
             return csv.GetRecords<CsvRecord>();
         }
     }

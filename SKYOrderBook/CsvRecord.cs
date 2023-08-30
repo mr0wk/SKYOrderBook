@@ -1,6 +1,5 @@
 ﻿using CsvHelper.Configuration.Attributes;
-using SKYOrderBook.Enum;
-using Action = SKYOrderBook.Enum.Action;
+using RecordAction = SKYOrderBook.Enums.RecordAction;
 
 namespace SKYOrderBook
 {
@@ -13,7 +12,7 @@ namespace SKYOrderBook
         public byte? Side { get; set; }
 
         [Name("Action")]
-        public Action Action { get; set; }
+        public RecordAction Action { get; set; }
 
         [Name("OrderId")]
         public ulong OrderId { get; set; }
